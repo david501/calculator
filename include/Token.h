@@ -7,8 +7,9 @@
 enum class Kind:char{
     name,number,end,
     plus='+',minus='-',mul='*',div='/',assign='=',lp='(',rp=')',
-    print=';'
+    print=';', power
 };
+
 
 
 struct calc_error

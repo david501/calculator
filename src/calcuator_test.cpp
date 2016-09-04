@@ -44,6 +44,10 @@ TEST_F(CalcTest, TestMul) {
     EXPECT_EQ(c("2*3"),"6\n");
 }
 
+TEST_F(CalcTest, TestPower) {
+    EXPECT_EQ(c("1+2**3+2"),"11\n");
+}
+
 TEST_F(CalcTest, TestDiv) {
     EXPECT_EQ(c("48/8"),"6\n");
 }
@@ -80,3 +84,10 @@ TEST_F(CalcTest, TestFinalTest) {
     EXPECT_EQ(c("a=3;b=8;c=a*b;(c+10)/2*(4-b)*5"),"3\n8\n24\n-340\n");
 }
 
+TEST_F(CalcTest, TestBadFunction) {
+    EXPECT_EQ(c("sin30/180*pi)**2"),"Invaild symbol\n");
+}
+
+TEST_F(CalcTest, TestFunction) {
+    EXPECT_EQ(c("sin(30/180*pi)**2"),"0.25\n");
+}

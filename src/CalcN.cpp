@@ -1,4 +1,5 @@
 #include "CalcN.h"
+using namespace std;
 
 CalcN::CalcN()
 {
@@ -11,17 +12,18 @@ CalcN::~CalcN()
     //dtor
 }
 
-void CalcN::operator()(std::istream &in,std::ostream &out)
+void CalcN::operator()(istream &in,std::ostream &out)
 {
     m_out=&out;
-    m_ts=std::unique_ptr<Token_Stream> (new Token_Stream(in));
+    m_ts=unique_ptr<Token_Stream> (new Token_Stream(in));
     run();
+
 }
 
-std::string CalcN::operator()(const std::string &sin)
+string CalcN::operator()(const string &sin)
 {
-    std::istringstream iss(sin);
-    std::ostringstream oss;
+    istringstream iss(sin);
+    ostringstream oss;
     (*this)(iss,oss);
     return oss.str();
 }
@@ -29,111 +31,131 @@ std::string CalcN::operator()(const std::string &sin)
 
 void CalcN::run()
 {
-    while(true){
-        m_ts->get();
-        if(m_ts->current().kind==Kind::end) break;
-        if(m_ts->current().kind==Kind::print) continue;
-        try{
-            std::shared_ptr<Node> N=expr(false);
+    while(true)
+    {
+        try
+        {
+            m_ts->get();
+            if(m_ts->current().kind==Kind::end) break;
+            if(m_ts->current().kind==Kind::print) continue;
+
+            unique_ptr<Node> N=move(expr(false));
             if(m_ts->current().kind==Kind::end || m_ts->current().kind==Kind::print)
+            {
+                //N->print();cout<<endl;
                 *m_out<<N->value()<<"\n";
+            }
             else
+            {
                 *m_out<<"Invaild symbol\n";
+                break;
+            }
         }
-        catch(calc_error &e){
+        catch(calc_error &e)
+        {
             *m_out<<e.what();
             break;
         }
     }
 }
 
-std::shared_ptr<Node> CalcN::expr(bool b)
+unique_ptr<Node> CalcN::expr(bool b)
 {
-    std::shared_ptr<Node> left=term(b);
+    unique_ptr<Node> left=move(term(b));
 
-    while(true) {
-        switch(m_ts->current().kind){
+    while(true)
+    {
+        Kind kind=m_ts->current().kind;
+        switch(kind)
+        {
         case Kind::plus:
         case Kind::minus:
-
-            left=std::shared_ptr<Node>(new Node(m_ts->current().kind,left,term(true)));
+            left=unique_ptr<Node>(new BinaryNode(kind,left,term(true)));
             break;
         default:
-            return left;
+            return move(left);
         }
     }
 }
 
-std::shared_ptr<Node> CalcN::term(bool b)
+unique_ptr<Node> CalcN::term(bool b)
 {
-    std::shared_ptr<Node> left =(prim(b));
+    unique_ptr<Node> left =move(prim(b));
 
-    while(true) {
-        switch(m_ts->current().kind){
-        case Kind::mul:
-        case Kind::div:
+    while(true)
+    {
+        Kind kind=m_ts->current().kind;
+        switch(kind)
         {
-            left=std::shared_ptr<Node> (new Node(m_ts->current().kind,left,prim(true)));
-            break;
-        }
-        default:
-            return left;
+            case Kind::mul:
+            {
+                if(m_ts->get().kind==kind)
+                    left=std::unique_ptr<Node> (new BinaryNode(Kind::power,left,prim(true)));
+                else
+                    left=std::unique_ptr<Node> (new BinaryNode(kind,left,prim(false)));
+                break;
+            }
+            case Kind::div:
+            {
+                left=std::unique_ptr<Node> (new BinaryNode(kind,left,prim(true)));
+                break;
+            }
+            default:
+                return move(left);
         }
     }
 }
 
-std::shared_ptr<Node> CalcN::prim(bool b)
+unique_ptr<Node> CalcN::prim(bool b)
 {
+    unique_ptr<Node> left;
+
     if(b) m_ts->get();
 
-    switch(m_ts->current().kind){
-    case Kind::number:
-        {
-            double d=m_ts->current().number_value;
-            m_ts->get();
-            return std::shared_ptr<Node> (new Node(Kind::number,d));
-        }
-    case Kind::name:
-        {
-            double &d=m_table[m_ts->current().string_value];
-            m_ts->get();
-            if(m_ts->current().kind==Kind::assign) {
-                d=expr(true)->value();
-            }
-            return std::shared_ptr<Node> (new Node(Kind::number,d));
-        }
-    case Kind::minus:
+    switch(m_ts->current().kind)
     {
-            return std::shared_ptr<Node> (new Node(Kind::minus, prim(true)));
+        case Kind::number:
+            {
+                double d=m_ts->current().number_value;
+                m_ts->get();
+                left=unique_ptr<Node> (new NumberNode(d));
+                break;
+            }
+        case Kind::name:
+            {
+                string name=m_ts->current().string_value;
+                FKind fk=get_FKind(name);
+                if(fk!=FKind::nofunc) {
+                    m_ts->get();
+                    if(m_ts->current().kind!=Kind::lp) throw calc_error("'(' expected");
+                    left=unique_ptr<Node> (new FuncNode(name, prim(false)));
+                    break;
+                }
+                double &d=m_table[name];
+                m_ts->get();
+                if(m_ts->current().kind==Kind::assign) {
+                    d=expr(true)->value();
+                }
+                left=unique_ptr<Node> (new NumberNode(d));
+                break;
+            }
+        case Kind::minus:
+            {
+                left=unique_ptr<Node> (new UnaryNode(Kind::minus, prim(true)));
+                break;
+            }
+        case Kind::lp:
+            {
+                std::unique_ptr<Node> tmp=move(expr(true));
+                if(m_ts->current().kind!=Kind::rp) throw calc_error("')' expected");
+                m_ts->get();
+                left=unique_ptr<Node> (new UnaryNode(Kind::lp, move(tmp)));
+                break;
+            }
+        default:
+            throw calc_error("primary expected");
     }
-    case Kind::lp:
-        {
-            std::shared_ptr<Node> left=(expr(true));
-            if(m_ts->current().kind!=Kind::rp) throw calc_error("')' expected");
-            m_ts->get();
-            return std::shared_ptr<Node> (new Node(Kind::lp, left));
-        }
-    default:
-        throw calc_error("primary expected");
-    }
+    return move(left);
 }
 
 
-double Node::value(void) const
-{
-    switch(kind){
-    case Kind::number: return number;
-    case Kind::plus: return left->value()+right->value();
-    case Kind::lp: return left->value();
-    case Kind::minus: return (right!=nullptr) ? left->value()-right->value(): -(left->value());
-    case Kind::mul: return left->value()*right->value();
-    case Kind::div:
-        {
-            if(double d=right->value())
-                return left->value()/d;
-            throw calc_error("divide by zero!");
-        }
-    default:
-        throw calc_error("Invaild symbol");
-    }
-}
