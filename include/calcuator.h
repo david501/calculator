@@ -15,9 +15,11 @@ struct calcuator_error
 class calcuator
 {
     public:
-        calcuator(std::istream &in=std::cin,std::ostream &out=std::cout);
-        calcuator(const std::string &sin,std::ostream &out=std::cout);
+        calcuator();
         ~calcuator();
+
+        void operator()(std::istream &in=std::cin,std::ostream &out=std::cout);
+        std::string operator()(const std::string &sin);
 
     protected:
         void run();
@@ -27,10 +29,9 @@ class calcuator
         double error(const std::string &s);
 
     private:
-        Token_Stream m_ts;
-        std::ostream &m_out;
+        Token_Stream *m_ts;
+        std::ostream *m_out;
 
         std::map<std::string, double> m_table;
-        int m_no_of_errors;
 };
 

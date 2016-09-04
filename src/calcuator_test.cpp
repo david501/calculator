@@ -1,106 +1,79 @@
 #include "gmock/gmock.h"
 #include "calcuator.h"
-using namespace std;
+using namespace ::testing;
 
-TEST(CalcTest, InitClass) {
-    calcuator c();
+class CalcTest:public Test{
+public:
+    calcuator c;
+};
+
+TEST_F(CalcTest, InitClass) {
+    calcuator cc;
 }
 
-TEST(CalcTest, TestOnlyPrint) {
-    ostringstream s;
-    calcuator c(";",s);
-    EXPECT_EQ(s.str(),"");
+TEST_F(CalcTest, TestOnlyPrint) {
+    EXPECT_EQ(c(";"),"");
 }
 
-TEST(CalcTest, TestOneNumber) {
-    ostringstream s;
-    calcuator c("123",s);
-    EXPECT_EQ(s.str(),"123\n");
+TEST_F(CalcTest, TestOneNumber) {
+    EXPECT_EQ(c("123"),"123\n");
 }
 
-TEST(CalcTest, TestTwoNumber) {
-    ostringstream s;
-    calcuator c("123;456",s);
-    EXPECT_EQ(s.str(),"123\n456\n");
+TEST_F(CalcTest, TestTwoNumber) {
+    EXPECT_EQ(c("123;456"),"123\n456\n");
 }
 
-TEST(CalcTest, TestPlusAndMinus) {
-    ostringstream s;
-    calcuator c("1+2;5-3",s);
-    EXPECT_EQ(s.str(),"3\n2\n");
+TEST_F(CalcTest, TestPlusAndMinus) {
+    EXPECT_EQ(c("1+2;5-3"),"3\n2\n");
 }
 
-TEST(CalcTest, TestPlusWithName) {
-    ostringstream s;
-    calcuator c("1+pi",s);
-    EXPECT_EQ(s.str(),"4.14159\n");
+TEST_F(CalcTest, TestPlusWithName) {
+    EXPECT_EQ(c("1+pi"),"4.14159\n");
 }
 
 
-TEST(CalcTest, TestSaveName) {
-    ostringstream s;
-    calcuator c("pi;a=3;b=2+2;a+b",s);
-    EXPECT_EQ(s.str(),"3.14159\n3\n4\n7\n");
+TEST_F(CalcTest, TestSaveName) {
+    EXPECT_EQ(c("pi;a=3;b=2+2;a+b"),"3.14159\n3\n4\n7\n");
 }
 
 
-TEST(CalcTest, TestMul) {
-    ostringstream s;
-    calcuator c("2*3",s);
-    EXPECT_EQ(s.str(),"6\n");
+TEST_F(CalcTest, TestMul) {
+    EXPECT_EQ(c("2*3"),"6\n");
 }
 
-TEST(CalcTest, TestDiv) {
-    ostringstream s;
-    calcuator c("48/8",s);
-    EXPECT_EQ(s.str(),"6\n");
+TEST_F(CalcTest, TestDiv) {
+    EXPECT_EQ(c("48/8"),"6\n");
 }
 
-TEST(CalcTest, TestDivByZero) {
-    ostringstream s;
-    calcuator c("48/0",s);
-    EXPECT_EQ(s.str(),"divide by zero!");
+TEST_F(CalcTest, TestDivByZero) {
+    EXPECT_EQ(c("48/0"),"divide by zero!");
 }
 
-TEST(CalcTest, TestNegitation) {
-    ostringstream s;
-    calcuator c("-48",s);
-    EXPECT_EQ(s.str(),"-48\n");
+TEST_F(CalcTest, TestNegitation) {
+    EXPECT_EQ(c("-48"),"-48\n");
 }
 
-TEST(CalcTest, TestNegitationWithPlus) {
-    ostringstream s;
-    calcuator c("-48+10",s);
-    EXPECT_EQ(s.str(),"-38\n");
+TEST_F(CalcTest, TestNegitationWithPlus) {
+    EXPECT_EQ(c("-48+10"),"-38\n");
 }
 
-TEST(CalcTest, TestLpRp) {
-    ostringstream s;
-    calcuator c("(1+2)",s);
-    EXPECT_EQ(s.str(),"3\n");
+TEST_F(CalcTest, TestLpRp) {
+    EXPECT_EQ(c("(1+2)"),"3\n");
 }
 
-TEST(CalcTest, TestLpWithoutRp) {
-    ostringstream s;
-    calcuator c("(1+2",s);
-    EXPECT_EQ(s.str(),"')' expected");
+TEST_F(CalcTest, TestLpWithoutRp) {
+    EXPECT_EQ(c("(1+2"),"')' expected");
 }
 
-TEST(CalcTest, TestMoreRp) {
-    ostringstream s;
-    calcuator c("(4+5))",s);
-    EXPECT_EQ(s.str(),"Invaild symbol\n");
+TEST_F(CalcTest, TestMoreRp) {
+    EXPECT_EQ(c("(4+5))"),"Invaild symbol\n");
 }
 
-TEST(CalcTest, TestMoreRpFirst) {
-    ostringstream s;
-    calcuator c(")1+2",s);
-    EXPECT_EQ(s.str(),"primary expected");
+TEST_F(CalcTest, TestMoreRpFirst) {
+    EXPECT_EQ(c(")1+2"),"primary expected");
 }
 
-TEST(CalcTest, TestFinalTest) {
-    ostringstream s;
-    calcuator c("a=3;b=8;c=a*b;(c+10)/2*(4-b)*5",s);
-    EXPECT_EQ(s.str(),"3\n8\n24\n-340\n");
+TEST_F(CalcTest, TestFinalTest) {
+    EXPECT_EQ(c("a=3;b=8;c=a*b;(c+10)/2*(4-b)*5"),"3\n8\n24\n-340\n");
 }
 
