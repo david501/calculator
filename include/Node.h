@@ -5,7 +5,7 @@
 #include <map>
 #include "Token.h"
 
-enum class FKind:char {nofunc,sin,cos,tan};
+enum class FKind:char {nofunc,sqrt,sin,cos,tan,asin,acos,atan,log,ln};
 FKind get_FKind(std::string s);
 
 class Node

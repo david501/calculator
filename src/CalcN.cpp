@@ -46,15 +46,12 @@ void CalcN::run()
                 *m_out<<N->value()<<"\n";
             }
             else
-            {
-                *m_out<<"Invaild symbol\n";
-                break;
-            }
+                throw calc_error ("Invaild symbol\n");
         }
         catch(calc_error &e)
         {
             *m_out<<e.what();
-            break;
+            while (m_ts->current().kind!=Kind::end && m_ts->current().kind!=Kind::print) m_ts->get();
         }
     }
 }
@@ -88,18 +85,14 @@ unique_ptr<Node> CalcN::term(bool b)
         switch(kind)
         {
             case Kind::mul:
-            {
                 if(m_ts->get().kind==kind)
                     left=std::unique_ptr<Node> (new BinaryNode(Kind::power,left,prim(true)));
                 else
                     left=std::unique_ptr<Node> (new BinaryNode(kind,left,prim(false)));
                 break;
-            }
             case Kind::div:
-            {
                 left=std::unique_ptr<Node> (new BinaryNode(kind,left,prim(true)));
                 break;
-            }
             default:
                 return move(left);
         }
@@ -122,7 +115,7 @@ unique_ptr<Node> CalcN::prim(bool b)
                 break;
             }
         case Kind::name:
-            {
+            {   // sin(x)
                 string name=m_ts->current().string_value;
                 FKind fk=get_FKind(name);
                 if(fk!=FKind::nofunc) {
@@ -131,6 +124,8 @@ unique_ptr<Node> CalcN::prim(bool b)
                     left=unique_ptr<Node> (new FuncNode(name, prim(false)));
                     break;
                 }
+
+                //name=123456;
                 double &d=m_table[name];
                 m_ts->get();
                 if(m_ts->current().kind==Kind::assign) {
@@ -140,12 +135,12 @@ unique_ptr<Node> CalcN::prim(bool b)
                 break;
             }
         case Kind::minus:
-            {
+            {   // -(expr)
                 left=unique_ptr<Node> (new UnaryNode(Kind::minus, prim(true)));
                 break;
             }
         case Kind::lp:
-            {
+            {   // ( expr )
                 std::unique_ptr<Node> tmp=move(expr(true));
                 if(m_ts->current().kind!=Kind::rp) throw calc_error("')' expected");
                 m_ts->get();

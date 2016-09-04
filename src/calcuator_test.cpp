@@ -85,9 +85,9 @@ TEST_F(CalcTest, TestFinalTest) {
 }
 
 TEST_F(CalcTest, TestBadFunction) {
-    EXPECT_EQ(c("sin30/180*pi)**2"),"Invaild symbol\n");
+    EXPECT_EQ(c("sin30)**2"),"Invaild symbol\n");
 }
 
 TEST_F(CalcTest, TestFunction) {
-    EXPECT_EQ(c("sin(30/180*pi)**2"),"0.25\n");
+    EXPECT_EQ(c("sin(30)**2"),"0.25\n");
 }
