@@ -1,10 +1,13 @@
 #include "gmock/gmock.h"
 #include "calcuator.h"
+#include "CalcN.h"
+
 using namespace ::testing;
 
 class CalcTest:public Test{
 public:
-    calcuator c;
+    //calcuator c;
+    CalcN c;
 };
 
 TEST_F(CalcTest, InitClass) {

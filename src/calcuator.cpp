@@ -10,14 +10,12 @@ calcuator::calcuator():m_ts(nullptr)
 
 calcuator::~calcuator()
 {
-    delete m_ts;
 }
 
 void calcuator::operator()(std::istream &in,std::ostream &out)
 {
     m_out=&out;
-    if(m_ts) delete m_ts;
-    m_ts=new Token_Stream(in);
+    m_ts=std::unique_ptr<Token_Stream> (new Token_Stream(in));
     run();
 }
 
@@ -33,17 +31,18 @@ std::string calcuator::operator()(const std::string &sin)
 void calcuator::run()
 {
     while(true){
-        m_ts->get();
-        if(m_ts->current().kind==Kind::end) break;
-        if(m_ts->current().kind==Kind::print) continue;
         try{
+            m_ts->get();
+            if(m_ts->current().kind==Kind::end) break;
+            if(m_ts->current().kind==Kind::print) continue;
+
             double d=expr(false);
             if(m_ts->current().kind==Kind::end || m_ts->current().kind==Kind::print)
                 *m_out<<d<<"\n";
             else
                 *m_out<<"Invaild symbol\n";
         }
-        catch(calcuator_error &e){
+        catch(calc_error &e){
             *m_out<<e.what();
             break;
         }
@@ -82,7 +81,7 @@ double calcuator::term(bool b)
                 left/=d;
                 break;
             }
-            throw calcuator_error("divide by zero!");
+            throw calc_error("divide by zero!");
 
         default:
             return left;
@@ -115,12 +114,12 @@ double calcuator::prim(bool b)
     case Kind::lp:
         {
             double d=expr(true);
-            if(m_ts->current().kind!=Kind::rp) throw calcuator_error("')' expected");
+            if(m_ts->current().kind!=Kind::rp) throw calc_error("')' expected");
             m_ts->get();
             return d;
         }
     default:
-        throw calcuator_error("primary expected");
+        throw calc_error("primary expected");
     }
     return 0.0;
 }

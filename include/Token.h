@@ -10,6 +10,14 @@ enum class Kind:char{
     print=';'
 };
 
+
+struct calc_error
+{
+    std::string m_s;
+    calc_error(const std::string &s):m_s(s){};
+    std::string& what(){ return m_s;}
+};
+
 struct Token
 {
     Kind kind;
