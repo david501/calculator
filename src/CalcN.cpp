@@ -17,12 +17,11 @@ void CalcN::operator()(istream &in,std::ostream &out)
     m_out=&out;
     m_ts=unique_ptr<Token_Stream> (new Token_Stream(in));
     run();
-
 }
 
-string CalcN::operator()(const string &sin)
+string CalcN::operator()(const string &s)
 {
-    istringstream iss(sin);
+    istringstream iss(s);
     ostringstream oss;
     (*this)(iss,oss);
     return oss.str();
@@ -101,8 +100,6 @@ unique_ptr<Node> CalcN::term(bool b)
 
 unique_ptr<Node> CalcN::prim(bool b)
 {
-    unique_ptr<Node> left;
-
     if(b) m_ts->get();
 
     switch(m_ts->current().kind)
@@ -111,46 +108,40 @@ unique_ptr<Node> CalcN::prim(bool b)
             {
                 double d=m_ts->current().number_value;
                 m_ts->get();
-                left=unique_ptr<Node> (new NumberNode(d));
-                break;
+                return unique_ptr<Node> (new NumberNode(d));
             }
         case Kind::name:
-            {   // sin(x)
+            {
                 string name=m_ts->current().string_value;
-                FKind fk=get_FKind(name);
-                if(fk!=FKind::nofunc) {
-                    m_ts->get();
-                    if(m_ts->current().kind!=Kind::lp) throw calc_error("'(' expected");
-                    left=unique_ptr<Node> (new FuncNode(name, prim(false)));
-                    break;
+                m_ts->get();
+
+                // function(x)
+                if(m_ts->current().kind==Kind::lp)
+                {
+                    return unique_ptr<Node> (new FuncNode(name, prim(false)));
                 }
 
-                //name=123456;
+                // name=123456;
                 double &d=m_table[name];
-                m_ts->get();
                 if(m_ts->current().kind==Kind::assign) {
                     d=expr(true)->value();
                 }
-                left=unique_ptr<Node> (new NumberNode(d));
-                break;
+                return unique_ptr<Node> (new NumberNode(d));
             }
         case Kind::minus:
             {   // -(expr)
-                left=unique_ptr<Node> (new UnaryNode(Kind::minus, prim(true)));
-                break;
+                return unique_ptr<Node> (new UnaryNode(Kind::minus, prim(true)));
             }
         case Kind::lp:
             {   // ( expr )
                 std::unique_ptr<Node> tmp=move(expr(true));
                 if(m_ts->current().kind!=Kind::rp) throw calc_error("')' expected");
                 m_ts->get();
-                left=unique_ptr<Node> (new UnaryNode(Kind::lp, move(tmp)));
-                break;
+                return unique_ptr<Node> (new UnaryNode(Kind::lp, move(tmp)));
             }
         default:
             throw calc_error("primary expected");
     }
-    return move(left);
 }
 
 

@@ -2,8 +2,9 @@
 #include <math.h>
 #include <string>
 #include <algorithm>
+#include <fenv.h>
 
-//Node::m_func_table
+using namespace std;
 
 Node::Node()
 {
@@ -15,9 +16,28 @@ Node::~Node()
     //dtor
 }
 
+void Node::init_math_handler() const
+{
+    if (math_errhandling & MATH_ERREXCEPT) feclearexcept(FE_ALL_EXCEPT);
+}
 
+void Node::is_math_exception() const
+{
+    if (math_errhandling & MATH_ERRNO) {
+        if (errno==EDOM) throw calc_error("errno set to EDOM\n");
+        if (errno==ERANGE) throw calc_error("errno set to ERANGE\n");
+    }
+    if (math_errhandling  &MATH_ERREXCEPT) {
+        if (fetestexcept(FE_INVALID)) throw calc_error("FE_INVALID raised\n");
+    }
+}
 
-void NumberNode::print(std::ostream &out) const
+double NumberNode::value(void) const
+{
+    return m_number;
+}
+
+void NumberNode::print(ostream &out) const
 {
     out<<m_number;
 }
@@ -33,7 +53,8 @@ double UnaryNode::value(void) const
             throw calc_error("Invaild symbol");
     }
 }
-void UnaryNode::print(std::ostream &out) const
+
+void UnaryNode::print(ostream &out) const
 {
      switch(m_kind)
     {
@@ -44,9 +65,9 @@ void UnaryNode::print(std::ostream &out) const
     }
 }
 
-FKind get_FKind(std::string s)
+FKind FuncNode::get_FKind(string s) const
 {
-    static std::map<std::string, FKind> ftable {{"sin", FKind::sin},
+    static map<string, FKind> ftable {{"sin", FKind::sin},
                                                 {"cos", FKind::cos},
                                                 {"tan", FKind::tan},
                                                 {"asin",FKind::asin},
@@ -63,41 +84,32 @@ FKind get_FKind(std::string s)
 
 double FuncNode::value(void) const
 {
-    FKind fkind=get_FKind(m_func_name);
-    double d;
     double pi=atan(1)*4/180;
+    double din=m_right->value();
+    double dout=0.0;
+    init_math_handler();
+
+    FKind fkind=get_FKind(m_func_name);
     switch(fkind)
     {
-        case FKind::sin: return sin(m_right->value()*pi);
-        case FKind::cos: return cos(m_right->value()*pi);
-        case FKind::tan: return tan(m_right->value()*pi);
-        case FKind::asin:
-            d=m_right->value();
-            if(fabs(d)<=1.0) return asin(d)/pi;
-            throw calc_error("Invaild Input");
-        case FKind::acos:
-            d=m_right->value();
-            if(fabs(d)<=1.0) return acos(d)/pi;
-            throw calc_error("Invaild Input");
-        case FKind::atan: return atan(m_right->value())/pi;
-        case FKind::sqrt:
-            d=m_right->value();
-            if(d>=0.0) return sqrt(d);
-            throw calc_error("Invaild Input");
-        case FKind::log:
-            d=m_right->value();
-            if(d>0.0) return log10(d);
-            throw calc_error("Invaild Input");
-        case FKind::ln:
-            d=m_right->value();
-            if(d>0.0) return log(d);
-            throw calc_error("Invaild Input");
+        case FKind::sin: dout=sin(din*pi); break;
+        case FKind::cos: dout=cos(din*pi); break;
+        case FKind::tan: dout=tan(din*pi); break;
+        case FKind::asin:dout=asin(din)/pi; break;
+        case FKind::acos:dout=acos(din)/pi; break;
+        case FKind::atan:dout=atan(din)/pi; break;
+        case FKind::sqrt:dout=sqrt(din); break;
+        case FKind::log: dout=log10(din); break;
+        case FKind::ln:  dout=log(din); break;
         default:
-            throw calc_error("Invaild symbol");
+            throw calc_error("Invaild function symbol\n");
     }
+
+    is_math_exception();
+    return dout;
 }
 
-void FuncNode::print(std::ostream &out) const
+void FuncNode::print(ostream &out) const
 {
     out<<m_func_name;
     m_right->print(out);
@@ -105,24 +117,27 @@ void FuncNode::print(std::ostream &out) const
 
 double BinaryNode::value(void) const
 {
+    double dr=m_right->value();
+    double dl=m_left->value();
+    double dout=0.0;
+    init_math_handler();
+
     switch(m_kind)
     {
-        case Kind::plus:    return m_left->value()+m_right->value();
-        case Kind::minus:   return m_left->value()-m_right->value();
-        case Kind::mul:     return m_left->value()*m_right->value();
-        case Kind::div:
-            {
-                if(double d=m_right->value())
-                    return m_left->value()/d;
-                throw calc_error("divide by zero!");
-            }
-        case Kind::power:   return pow(m_left->value(),m_right->value());
+        case Kind::plus:    dout= dl+dr;break;
+        case Kind::minus:   dout= dl-dr;break;
+        case Kind::mul:     dout= dl*dr;break;
+        case Kind::div:     dout= dl/dr;break;
+        case Kind::power:   dout=pow(dl,dr);break;
         default:
-            throw calc_error("Invaild symbol");
+            throw calc_error("Invaild symbol\n");
     }
+
+    is_math_exception();
+    return dout;
 }
 
-void BinaryNode::print(std::ostream &out) const
+void BinaryNode::print(ostream &out) const
 {
     m_left->print(out);
     if(m_kind==Kind::power)

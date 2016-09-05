@@ -53,7 +53,7 @@ TEST_F(CalcTest, TestDiv) {
 }
 
 TEST_F(CalcTest, TestDivByZero) {
-    EXPECT_EQ(c("48/0"),"divide by zero!");
+    EXPECT_EQ(c("48/0+10"),"inf\n");
 }
 
 TEST_F(CalcTest, TestNegitation) {
@@ -90,4 +90,12 @@ TEST_F(CalcTest, TestBadFunction) {
 
 TEST_F(CalcTest, TestFunction) {
     EXPECT_EQ(c("sin(30)**2"),"0.25\n");
+}
+
+TEST_F(CalcTest, TestFunctionException) {
+    EXPECT_EQ(c("asin(30)"),"errno set to EDOM\n");
+}
+
+TEST_F(CalcTest, TestInvalidFunction) {
+    EXPECT_EQ(c("func(30)"),"Invaild function symbol\n");
 }

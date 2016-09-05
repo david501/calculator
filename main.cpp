@@ -1,14 +1,19 @@
 #include "gmock/gmock.h"
+#include <sstream>
 #include "calcuator.h"
 #include "CalcN.h"
-#include <sstream>
+
+#define UNIT_TEST
 
 using namespace std;
 
 int main(int ac, char**av)
 {
+#ifdef UNIT_TEST
     testing::InitGoogleMock(&ac,av);
     return RUN_ALL_TESTS();
-//    CalcN c;
-//    c();
+#else
+    CalcN c;
+    c();
+#endif
 }

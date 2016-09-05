@@ -19,6 +19,8 @@ class Node
         Node(const Node&n)=delete;
         void operator=(const Node& n)=delete;
     protected:
+        void init_math_handler() const;
+        void is_math_exception() const;
     private:
 };
 
@@ -27,7 +29,7 @@ class NumberNode:public Node{
 public:
     NumberNode(const double d):m_number(d){};
     ~NumberNode(){};
-    double value(void) const { return m_number;}
+    double value(void) const;
     void print(std::ostream &out=std::cout) const;
 };
 
@@ -44,6 +46,8 @@ public:
 class FuncNode:public Node{
     std::string m_func_name;
     std::unique_ptr<Node> m_right;
+    FKind get_FKind(std::string s)const;
+
 public:
     FuncNode(const std::string &s,std::unique_ptr<Node> &&l):m_func_name(s),m_right(std::move(l)){};
     ~FuncNode(){};

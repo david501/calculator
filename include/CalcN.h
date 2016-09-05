@@ -15,7 +15,7 @@ class CalcN
         ~CalcN();
 
         void operator()(std::istream &in=std::cin,std::ostream &out=std::cout);
-        std::string operator()(const std::string &sin);
+        std::string operator()(const std::string &s);
 
     protected:
         void run();
