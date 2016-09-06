@@ -89,7 +89,7 @@ TEST_F(CalcTest, TestBadFunction) {
 }
 
 TEST_F(CalcTest, TestFunction) {
-    EXPECT_EQ(c("sin(30)**2"),"0.25\n");
+    EXPECT_EQ(c("sin(30/180*pi)**2"),"0.25\n");
 }
 
 TEST_F(CalcTest, TestFunctionException) {

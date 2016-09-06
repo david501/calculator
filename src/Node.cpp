@@ -65,51 +65,27 @@ void UnaryNode::print(ostream &out) const
     }
 }
 
-FKind FuncNode::get_FKind(string s) const
+
+double UnaryFuncNode::value(void) const
 {
-    static map<string, FKind> ftable {{"sin", FKind::sin},
-                                                {"cos", FKind::cos},
-                                                {"tan", FKind::tan},
-                                                {"asin",FKind::asin},
-                                                {"acos",FKind::acos},
-                                                {"atan",FKind::atan},
-                                                {"sqrt",FKind::sqrt},
-                                                {"log", FKind::log},
-                                                {"ln",  FKind::ln},
+    static map<string, double(*)(double)> ftable {{"sin",sin},{"cos", cos},{"tan", tan},
+                                                {"asin",asin},{"acos",acos},{"atan",atan},
+                                                {"sqrt",sqrt},{"log", log10},{"ln", log},
                                                 };
-
-    if(ftable.find(s)==ftable.end()) return FKind::nofunc;
-    return ftable[s];
-}
-
-double FuncNode::value(void) const
-{
-    double pi=atan(1)*4/180;
     double din=m_right->value();
     double dout=0.0;
+
     init_math_handler();
 
-    FKind fkind=get_FKind(m_func_name);
-    switch(fkind)
-    {
-        case FKind::sin: dout=sin(din*pi); break;
-        case FKind::cos: dout=cos(din*pi); break;
-        case FKind::tan: dout=tan(din*pi); break;
-        case FKind::asin:dout=asin(din)/pi; break;
-        case FKind::acos:dout=acos(din)/pi; break;
-        case FKind::atan:dout=atan(din)/pi; break;
-        case FKind::sqrt:dout=sqrt(din); break;
-        case FKind::log: dout=log10(din); break;
-        case FKind::ln:  dout=log(din); break;
-        default:
-            throw calc_error("Invaild function symbol\n");
-    }
+    auto iter=ftable.find(m_func_name);
+    if(iter==ftable.end()) throw calc_error("Invaild function symbol\n");
+    dout=iter->second(din);
 
     is_math_exception();
     return dout;
 }
 
-void FuncNode::print(ostream &out) const
+void UnaryFuncNode::print(ostream &out) const
 {
     out<<m_func_name;
     m_right->print(out);

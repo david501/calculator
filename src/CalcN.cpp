@@ -118,7 +118,7 @@ unique_ptr<Node> CalcN::prim(bool b)
                 // function(x)
                 if(m_ts->current().kind==Kind::lp)
                 {
-                    return unique_ptr<Node> (new FuncNode(name, prim(false)));
+                    return unique_ptr<Node> (new UnaryFuncNode(name, prim(false)));
                 }
 
                 // name=123456;

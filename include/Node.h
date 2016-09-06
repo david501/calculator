@@ -5,9 +5,6 @@
 #include <map>
 #include "Token.h"
 
-enum class FKind:char {nofunc,sqrt,sin,cos,tan,asin,acos,atan,log,ln};
-FKind get_FKind(std::string s);
-
 class Node
 {
     public:
@@ -43,14 +40,13 @@ public:
     void print(std::ostream &out=std::cout) const;
 };
 
-class FuncNode:public Node{
+class UnaryFuncNode:public Node{
     std::string m_func_name;
     std::unique_ptr<Node> m_right;
-    FKind get_FKind(std::string s)const;
 
 public:
-    FuncNode(const std::string &s,std::unique_ptr<Node> &&l):m_func_name(s),m_right(std::move(l)){};
-    ~FuncNode(){};
+    UnaryFuncNode(const std::string &s,std::unique_ptr<Node> &&l):m_func_name(s),m_right(std::move(l)){};
+    ~UnaryFuncNode(){};
     double value(void) const;
     void print(std::ostream &out=std::cout) const;
 };
