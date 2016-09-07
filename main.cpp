@@ -1,6 +1,5 @@
 #include "gmock/gmock.h"
 #include <sstream>
-#include "calcuator.h"
 #include "CalcN.h"
 
 #define UNIT_TEST

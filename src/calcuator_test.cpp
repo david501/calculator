@@ -11,7 +11,7 @@ public:
 };
 
 TEST_F(CalcTest, InitClass) {
-    calcuator cc;
+    CalcN cc;
 }
 
 TEST_F(CalcTest, TestOnlyPrint) {

@@ -2,8 +2,11 @@
 
 #include <iostream>
 #include <memory>
-#include <map>
-#include "Token.h"
+
+struct calc_error: std::runtime_error
+{
+    calc_error(const std::string &s):std::runtime_error(s){};
+};
 
 class Node
 {
@@ -31,32 +34,32 @@ public:
 };
 
 class UnaryNode:public Node{
-    Kind m_kind;
+    std::string m_op;
     std::unique_ptr<Node> m_right;
 public:
-    UnaryNode(const Kind k,std::unique_ptr<Node> &&l):m_kind(k),m_right(std::move(l)){};
+    UnaryNode(const std::string &op,std::unique_ptr<Node> &&l):m_op(op),m_right(std::move(l)){};
     ~UnaryNode(){};
     double value(void) const;
     void print(std::ostream &out=std::cout) const;
 };
 
 class UnaryFuncNode:public Node{
-    std::string m_func_name;
+    std::string m_op;
     std::unique_ptr<Node> m_right;
 
 public:
-    UnaryFuncNode(const std::string &s,std::unique_ptr<Node> &&l):m_func_name(s),m_right(std::move(l)){};
+    UnaryFuncNode(const std::string &s,std::unique_ptr<Node> &&l):m_op(s),m_right(std::move(l)){};
     ~UnaryFuncNode(){};
     double value(void) const;
     void print(std::ostream &out=std::cout) const;
 };
 
 class BinaryNode:public Node{
-    Kind m_kind;
+    std::string m_op;
     std::unique_ptr<Node> m_left;
     std::unique_ptr<Node> m_right;
 public:
-    BinaryNode(const Kind k,std::unique_ptr<Node> &l,std::unique_ptr<Node> &&r):m_kind(k),m_left(std::move(l)),m_right(std::move(r)){};
+    BinaryNode(const std::string &s,std::unique_ptr<Node> &l,std::unique_ptr<Node> &&r):m_op(s),m_left(std::move(l)),m_right(std::move(r)){};
     ~BinaryNode(){};
     double value(void) const;
     void print(std::ostream &out=std::cout) const;

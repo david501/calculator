@@ -47,7 +47,7 @@ void CalcN::run()
             else
                 throw calc_error ("Invaild symbol\n");
         }
-        catch(calc_error &e)
+        catch(exception &e)
         {
             *m_out<<e.what();
             while (m_ts->current().kind!=Kind::end && m_ts->current().kind!=Kind::print) m_ts->get();
@@ -66,7 +66,7 @@ unique_ptr<Node> CalcN::expr(bool b)
         {
         case Kind::plus:
         case Kind::minus:
-            left=unique_ptr<Node>(new BinaryNode(kind,left,term(true)));
+            left=unique_ptr<Node>(new BinaryNode({static_cast<char>(kind)},left,term(true)));
             break;
         default:
             return move(left);
@@ -85,12 +85,12 @@ unique_ptr<Node> CalcN::term(bool b)
         {
             case Kind::mul:
                 if(m_ts->get().kind==kind)
-                    left=std::unique_ptr<Node> (new BinaryNode(Kind::power,left,prim(true)));
+                    left=unique_ptr<Node> (new BinaryNode("**",left,prim(true)));
                 else
-                    left=std::unique_ptr<Node> (new BinaryNode(kind,left,prim(false)));
+                    left=unique_ptr<Node> (new BinaryNode({static_cast<char>(kind)},left,prim(false)));
                 break;
             case Kind::div:
-                left=std::unique_ptr<Node> (new BinaryNode(kind,left,prim(true)));
+                left=unique_ptr<Node> (new BinaryNode({static_cast<char>(kind)},left,prim(true)));
                 break;
             default:
                 return move(left);
@@ -130,14 +130,14 @@ unique_ptr<Node> CalcN::prim(bool b)
             }
         case Kind::minus:
             {   // -(expr)
-                return unique_ptr<Node> (new UnaryNode(Kind::minus, prim(true)));
+                return unique_ptr<Node> (new UnaryNode("-", prim(true)));
             }
         case Kind::lp:
             {   // ( expr )
                 std::unique_ptr<Node> tmp=move(expr(true));
                 if(m_ts->current().kind!=Kind::rp) throw calc_error("')' expected");
                 m_ts->get();
-                return unique_ptr<Node> (new UnaryNode(Kind::lp, move(tmp)));
+                return unique_ptr<Node> (new UnaryNode("(", move(tmp)));
             }
         default:
             throw calc_error("primary expected");

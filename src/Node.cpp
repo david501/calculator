@@ -1,5 +1,6 @@
 #include "Node.h"
 #include <math.h>
+#include <map>
 #include <string>
 #include <algorithm>
 #include <fenv.h>
@@ -45,24 +46,16 @@ void NumberNode::print(ostream &out) const
 
 double UnaryNode::value(void) const
 {
-    switch(m_kind)
-    {
-        case Kind::lp: return m_right->value();
-        case Kind::minus: return -(m_right->value());
-        default:
-            throw calc_error("Invaild symbol");
-    }
+    if(m_op=="(") return m_right->value();
+    if(m_op=="-") return -(m_right->value());
+    throw calc_error("Invaild symbol");
 }
 
 void UnaryNode::print(ostream &out) const
 {
-     switch(m_kind)
-    {
-        case Kind::lp: out<<"(";m_right->print(out);out<<")";break;
-        case Kind::minus: out<<"-";m_right->print(out);break;
-        default:
-            throw calc_error("Invaild symbol");
-    }
+    out<<m_op;
+    m_right->print(out);
+    if(m_op=="(") out<<")";
 }
 
 
@@ -77,7 +70,7 @@ double UnaryFuncNode::value(void) const
 
     init_math_handler();
 
-    auto iter=ftable.find(m_func_name);
+    auto iter=ftable.find(m_op);
     if(iter==ftable.end()) throw calc_error("Invaild function symbol\n");
     dout=iter->second(din);
 
@@ -87,27 +80,28 @@ double UnaryFuncNode::value(void) const
 
 void UnaryFuncNode::print(ostream &out) const
 {
-    out<<m_func_name;
+    out<<m_op;
     m_right->print(out);
 }
 
 double BinaryNode::value(void) const
 {
+    static map<string, double(*)(double,double)> ftable {
+            {"+",[](double a,double b)->double {return a+b;}},
+            {"-",[](double a,double b)->double {return a-b;}},
+            {"*",[](double a,double b)->double {return a*b;}},
+            {"/",[](double a,double b)->double {return a/b;}},
+            {"**",pow},
+    };
+
     double dr=m_right->value();
     double dl=m_left->value();
     double dout=0.0;
     init_math_handler();
 
-    switch(m_kind)
-    {
-        case Kind::plus:    dout= dl+dr;break;
-        case Kind::minus:   dout= dl-dr;break;
-        case Kind::mul:     dout= dl*dr;break;
-        case Kind::div:     dout= dl/dr;break;
-        case Kind::power:   dout=pow(dl,dr);break;
-        default:
-            throw calc_error("Invaild symbol\n");
-    }
+    auto iter=ftable.find(m_op);
+    if(iter==ftable.end()) throw calc_error("Invaild symbol\n");
+    dout=iter->second(dl,dr);
 
     is_math_exception();
     return dout;
@@ -116,10 +110,7 @@ double BinaryNode::value(void) const
 void BinaryNode::print(ostream &out) const
 {
     m_left->print(out);
-    if(m_kind==Kind::power)
-        out<<"**";
-    else
-        out<<static_cast<char>(m_kind);
+    out<<m_op;
     m_right->print(out);
 }
 

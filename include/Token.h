@@ -3,20 +3,12 @@
 #include <istream>
 #include <sstream>
 #include <string>
+#include <stdexcept>
 
 enum class Kind:char{
     name,number,end,
     plus='+',minus='-',mul='*',div='/',assign='=',lp='(',rp=')',
     print=';', power
-};
-
-
-
-struct calc_error
-{
-    std::string m_s;
-    calc_error(const std::string &s):m_s(s){};
-    std::string& what(){ return m_s;}
 };
 
 struct Token
